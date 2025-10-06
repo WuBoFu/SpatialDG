@@ -16,7 +16,6 @@ device = torch.device('mps')
 import os
 os.environ["LD_LIBRARY_PATH"] = f"{os.popen('python -m rpy2.situation LD_LIBRARY_PATH').read().strip()}:{os.environ.get('LD_LIBRARY_PATH', '')}"
 
-# delta = 0.15 0.73 /0.1 0.7/ 0.2 0.69 / 0.16 0.7289/ 0.14 0.7345/0.13 0.6725/0 0.7064
 def load_data(dataset):
     print("load data:")
     path = "../generate_data/DLPFC/" + dataset + "/Space.h5ad"
@@ -39,7 +38,6 @@ def train_with_dgi(model, features, sadj, fadj, graph_nei, graph_neg, config, op
     model.train()
     optimizer.zero_grad()
 
-    # 生成腐败视图（负样本）
     if augmentor is not None:
         corrupted = augmentor.create_corrupted_views(features, sadj, fadj)
         features_neg = corrupted['corrupted_features']
