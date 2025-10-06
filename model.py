@@ -5,7 +5,6 @@ from torch.nn.parameter import Parameter
 from layers import SGC, GraphConvolution
 import pandas as pd
 
-
 class Discriminator(nn.Module):
     def __init__(self, n_h):
         super(Discriminator, self).__init__()
@@ -44,12 +43,10 @@ class AvgReadout(nn.Module):
             row_sum = row_sum.expand((vsum.shape[1], row_sum.shape[0])).T
             global_emb = vsum / row_sum
         else:
-            # 如果没有mask，直接平均
             global_emb = torch.mean(emb, dim=0, keepdim=True)
         return F.normalize(global_emb, p=2, dim=1)
 
 class DGILoss(nn.Module):
-    """DGI对比学习损失"""
     
     def __init__(self, hidden_dim):
         super().__init__()
@@ -63,20 +60,12 @@ class DGILoss(nn.Module):
             adj_mask: 邻接掩码（可选）
         """
         batch_size = embeddings.size(0)
-        
-        # 生成全局表征
         if adj_mask is not None:
             global_repr = self.readout(embeddings, adj_mask)
         else:
             global_repr = self.readout(embeddings)
-        
-        # 生成负样本（随机排列）
         negative_embeddings = embeddings[torch.randperm(batch_size)]
-        
-        # 判别器预测
         logits = self.discriminator(global_repr, embeddings, negative_embeddings)
-        
-        # 二分类损失
         pos_labels = torch.ones(batch_size, 1, device=embeddings.device)
         neg_labels = torch.zeros(batch_size, 1, device=embeddings.device)
         labels = torch.cat([pos_labels, neg_labels], dim=0)
@@ -89,10 +78,7 @@ class DGILoss(nn.Module):
         
         return loss
 
-# 数据增强模块（适配DGI）
 class DGIDataAugmentation:
-    """DGI风格的数据增强"""
-    
     def __init__(self, corruption_ratio=0.2):
         self.corruption_ratio = corruption_ratio
     
@@ -112,8 +98,6 @@ class DGIDataAugmentation:
             adj_dense = adj.to_dense()
         else:
             adj_dense = adj.clone()
-        
-        # 随机删除边
         mask = torch.rand_like(adj_dense) > self.corruption_ratio
         corrupted_adj = adj_dense * mask
         
@@ -193,32 +177,20 @@ class Spatial_GraST_DGI(nn.Module):
         self.dropout = dropout
     
     def forward(self, x, sadj, fadj, return_contrastive=True):
-        # 原有的前向传播
         emb1 = self.SGCN(x, sadj)  # Spatial_GCN
         com1 = self.CGCN(x, sadj)  # Co_GCN
         com2 = self.CGCN(x, fadj)  # Co_GCN
         emb2 = self.FGCN(x, fadj)  # Feature_GCN
-
         emb = torch.stack([emb1, (com1 + com2) / 2, emb2], dim=1)
-       
-
         emb, att = self.att(emb)
         emb = self.MLP(emb)
-
-        
-       
         [pi, disp, mean] = self.ZINB(emb)
         
         if not return_contrastive or not self.training:
             return com1, com2, emb, pi, disp, mean
-        
-        # # DGI对比学习
         if self.use_spatial_contrastive:
-            # 使用空间邻接矩阵作为掩码
             dgi_loss = self.dgi_loss_fn(emb, sadj.to_dense())
         else:
-            # 不使用空间信息
-            dgi_loss = self.dgi_loss_fn(emb)
-                
+            dgi_loss = self.dgi_loss_fn(emb)       
         return com1, com2, emb, pi, disp, mean, dgi_loss
 
