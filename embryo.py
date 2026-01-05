@@ -18,7 +18,7 @@ from utils import (
     ZINB, regularization_loss, consistency_loss, clustering
 )
 
-# 全局调色板（确保长度>=聚类数）
+
 PLOT_COLOR = [
     "#F56867","#556B2F","#C798EE","#59BE86","#006400","#8470FF",
     "#CD69C9","#EE7621","#B22222","#FFD700","#CD5555","#DB4C6C",
@@ -156,6 +156,7 @@ def main(highly_genes=3000, save=False):
         nhid1=config.nhid1,
         nhid2=config.nhid2,
         dropout=config.dropout,
+        dgi_sampling_strategy='adaptive',
         contrastive_dim=config.contrastive_dim,
         use_spatial_contrastive=config.use_spatial_contrastive
     )
@@ -172,18 +173,6 @@ def main(highly_genes=3000, save=False):
     print(f"Clustering into {n_clusters} domains...")
     adata = cluster_and_visualize(adata, emb, n_clusters, palette=PLOT_COLOR, show=True)
 
-    # 示例：可选 marker 可视化（自行修改）
-    marker_genes = {
-        "Endothelium": ["Pecam1", "Cdh5", "Kdr"],
-        "Mesenchyme": ["Meox1", "Vim", "Fn1"]
-    }
-    visualize(adata, palette=PLOT_COLOR, domains_to_show=list(range(n_clusters)), marker_genes=marker_genes)
-
-    if save:
-        adata.write(os.path.join(save_path, "spatial_dg_result.h5ad"))
-        pd.DataFrame(emb).to_csv(os.path.join(save_path, "embeddings.csv"), index=False)
-        print(f"Results saved to {save_path}")
-    print("Done.")
 
 if __name__ == "__main__":
     main(highly_genes=3000, save=False)
