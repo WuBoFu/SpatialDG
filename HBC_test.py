@@ -35,12 +35,11 @@ def load_data(dataset):
 
 
 def train_with_dgi(model, features, sadj, fadj, graph_nei, graph_neg, config, optimizer):
-    """DGI训练函数"""
     model.train()
     optimizer.zero_grad()
     forward_result = model(features, sadj, fadj, return_contrastive=True)
     
-    if len(forward_result) == 7:  # 包含DGI损失
+    if len(forward_result) == 7:  
         com1, com2, emb, pi, disp, mean, dgi_loss = forward_result
     else:  
         com1, com2, emb, pi, disp, mean = forward_result
@@ -51,7 +50,7 @@ def train_with_dgi(model, features, sadj, fadj, graph_nei, graph_neg, config, op
     total_loss = (config.alpha * zinb_loss + 
                   config.beta * con_loss + 
                   config.gamma * reg_loss +
-                  config.delta * dgi_loss)  # DGI损失权重
+                  config.delta * dgi_loss)  
     emb = pd.DataFrame(emb.cpu().detach().numpy()).fillna(0).values
     mean = pd.DataFrame(mean.cpu().detach().numpy()).fillna(0).values
     
@@ -61,7 +60,6 @@ def train_with_dgi(model, features, sadj, fadj, graph_nei, graph_neg, config, op
     return emb, mean, zinb_loss, reg_loss, con_loss, dgi_loss, total_loss
 if __name__ == "__main__":
     parse = argparse.ArgumentParser()
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     datasets = ['Human_Breast_Cancer']
 
     for i in range(len(datasets)):
@@ -104,6 +102,7 @@ if __name__ == "__main__":
             nfeat=config.fdim,
             nhid1=config.nhid1,
             nhid2=config.nhid2,
+            dgi_sampling_strategy='adaptive',
             dropout=config.dropout,
             contrastive_dim=config.contrastive_dim,
             use_spatial_contrastive=config.use_spatial_contrastive
