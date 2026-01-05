@@ -86,6 +86,7 @@ model = Spatial_GraST_DGI(
     nfeat=n_input,
     nhid1=config.nhid1,
     nhid2=config.nhid2,
+    dgi_sampling_strategy='adaptive',
     dropout=config.dropout,
     contrastive_dim=config.contrastive_dim,
     use_spatial_contrastive=config.use_spatial_contrastive
