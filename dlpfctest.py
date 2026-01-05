@@ -34,7 +34,6 @@ def load_data(dataset):
     return adata, features, labels, nfadj, nsadj, graph_nei, graph_neg
 
 def train_with_dgi(model, features, sadj, fadj, graph_nei, graph_neg, config, optimizer, augmentor=None):
-    """DGI训练函数"""
     model.train()
     optimizer.zero_grad()
 
@@ -49,7 +48,7 @@ def train_with_dgi(model, features, sadj, fadj, graph_nei, graph_neg, config, op
         fadj_neg = fadj
     forward_result = model(features, sadj, fadj, return_contrastive=True)
     
-    if len(forward_result) == 7:  # 包含DGI损失
+    if len(forward_result) == 7: 
         com1, com2, emb, pi, disp, mean, dgi_loss = forward_result
     else:  
         com1, com2, emb, pi, disp, mean = forward_result
@@ -60,7 +59,7 @@ def train_with_dgi(model, features, sadj, fadj, graph_nei, graph_neg, config, op
     total_loss = (config.alpha * zinb_loss + 
                   config.beta * con_loss + 
                   config.gamma * reg_loss +
-                  config.delta * dgi_loss)  # DGI损失权重
+                  config.delta * dgi_loss) 
     emb = pd.DataFrame(emb.cpu().detach().numpy()).fillna(0).values
     mean = pd.DataFrame(mean.cpu().detach().numpy()).fillna(0).values
     
