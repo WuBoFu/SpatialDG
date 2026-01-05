@@ -116,9 +116,9 @@ class DGILoss(nn.Module):
                 candidates = candidates[candidates != i][:1]
                 negative_indices[i] = candidates[0]
             else:
-                # Select hardest negative (lowest similarity)
+                # Select hard negative (highest similarity among non-neighbors)
                 candidate_sims = emb_sim_norm[i, candidates]
-                hardest_idx = torch.argmin(candidate_sims)
+                hardest_idx = torch.argmax(candidate_sims)
                 negative_indices[i] = candidates[hardest_idx]
         
         return embeddings[negative_indices]
